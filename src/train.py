@@ -8,6 +8,10 @@ from sklearn.metrics import accuracy_score, classification_report
 
 from src.data_preprocessing import load_data, preprocess
 
+# Set MLflow tracking (important for CI)
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("heart-disease")
+
 # Load dataset
 df = load_data("data/heart.csv")
 
