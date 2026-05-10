@@ -1,3 +1,4 @@
+import os
 import joblib
 import mlflow
 import mlflow.sklearn
@@ -7,6 +8,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 from src.data_preprocessing import load_data, preprocess
+
+# Ensure mlruns directory exists
+os.makedirs("mlruns", exist_ok=True)
 
 # Set MLflow tracking (important for CI)
 mlflow.set_tracking_uri("file:./mlruns")
