@@ -1,0 +1,10 @@
+artifact_location: file:///Users/rayrao/Documents/MTech/MLOps_Assignment/heart-disease-mlops/mlruns/174794144039261098/models/m-ba25226f55eb473493c0cccd48d5a74e/artifacts
+creation_timestamp: 1778425484763
+experiment_id: '174794144039261098'
+last_updated_timestamp: 1778425486755
+model_id: m-ba25226f55eb473493c0cccd48d5a74e
+model_type: null
+name: LogisticRegression
+source_run_id: 82aaba185fe641418e4993b2e9aee8d8
+status: 2
+status_message: null
