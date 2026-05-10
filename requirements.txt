@@ -7,3 +7,5 @@ uvicorn
 joblib
 pytest
 python-multipart
+seaborn
+matplotlib

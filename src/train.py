@@ -2,11 +2,12 @@ import os
 import joblib
 import mlflow
 import mlflow.sklearn
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
+from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, RocCurveDisplay
 
 from src.data_preprocessing import load_data, preprocess
 
@@ -65,6 +66,13 @@ for name, model in models.items():
         mlflow.log_metric("accuracy", acc)
         mlflow.log_metric("roc_auc", roc_auc)
         mlflow.log_metric("cv_accuracy", cv_scores.mean())
+
+        #ROC Curve Plot
+        RocCurveDisplay.from_estimator(model, X_test, y_test)
+        plt.title(f"ROC Curve - {name}")
+        plt.savefig("roc_curve.png")
+        mlflow.log_artifact("roc_curve.png")
+        plt.close()
 
         mlflow.sklearn.log_model(model, name)
 
