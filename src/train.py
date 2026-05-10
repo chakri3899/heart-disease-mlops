@@ -3,56 +3,78 @@ import joblib
 import mlflow
 import mlflow.sklearn
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
 
 from src.data_preprocessing import load_data, preprocess
 
-# Ensure mlruns directory exists
+# Ensure MLflow directory exists
 os.makedirs("mlruns", exist_ok=True)
 
-# Set MLflow tracking (important for CI)
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("heart-disease")
 
 # Load dataset
 df = load_data("data/heart.csv")
 
-# Preprocess data
+# Preprocess
 X, y, scaler = preprocess(df)
 
-# Split data
+# Split
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Start MLflow experiment
-with mlflow.start_run():
+# Define models
+models = {
+    "LogisticRegression": LogisticRegression(max_iter=1000),
+    "RandomForest": RandomForestClassifier(n_estimators=100, random_state=42)
+}
 
-    # Train model
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
+best_model = None
+best_score = 0
 
-    # Predictions
-    preds = model.predict(X_test)
+for name, model in models.items():
 
-    # Metrics
-    acc = accuracy_score(y_test, preds)
-    print(f"Accuracy: {acc}")
+    with mlflow.start_run(run_name=name):
 
-    print("\nClassification Report:")
-    print(classification_report(y_test, preds))
+        # Train
+        model.fit(X_train, y_train)
 
-    # Log in MLflow
-    mlflow.log_param("model", "RandomForest")
-    mlflow.log_param("n_estimators", 100)
-    mlflow.log_metric("accuracy", acc)
+        # Predict
+        preds = model.predict(X_test)
+        probs = model.predict_proba(X_test)[:, 1]
 
-    mlflow.sklearn.log_model(model, "model")
+        # Metrics
+        acc = accuracy_score(y_test, preds)
+        roc_auc = roc_auc_score(y_test, probs)
 
-    # Save model & scaler
-    joblib.dump(model, "models/model.pkl")
-    joblib.dump(scaler, "models/scaler.pkl")
+        print(f"\n{name} Results:")
+        print(f"Accuracy: {acc}")
+        print(f"ROC-AUC: {roc_auc}")
+        print(classification_report(y_test, preds))
 
-print("\nTraining complete! Model saved in 'models/' folder.")
+        # Cross-validation
+        cv_scores = cross_val_score(model, X, y, cv=5)
+        print(f"CV Accuracy: {cv_scores.mean()}")
+
+        # MLflow logging
+        mlflow.log_param("model", name)
+        mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("roc_auc", roc_auc)
+        mlflow.log_metric("cv_accuracy", cv_scores.mean())
+
+        mlflow.sklearn.log_model(model, name)
+
+        # Save best model
+        if roc_auc > best_score:
+            best_score = roc_auc
+            best_model = model
+
+# Save best model
+joblib.dump(best_model, "models/model.pkl")
+joblib.dump(scaler, "models/scaler.pkl")
+
+print("\nBest model saved!")
